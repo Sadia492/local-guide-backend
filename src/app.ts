@@ -2,9 +2,9 @@ import express, { Request, Response } from "express";
 import routes from "./routes"; // Your main router (import all modules there)
 import cors from "cors";
 import cookieParser from "cookie-parser";
-// import { errorHandler } from "./middleware/errorHandler";
 import { notFoundRoute } from "./middleware/notFoundRoute";
 import dotenv from "dotenv";
+import { globalErrorHandler } from "./middleware/globalErrorHandler";
 
 // Load env vars
 dotenv.config();
@@ -368,7 +368,7 @@ app.get("/", (req: Request, res: Response) => {
   `);
 });
 
-// app.use(errorHandler);
+app.use(globalErrorHandler);
 app.use(notFoundRoute);
 
 export default app;
