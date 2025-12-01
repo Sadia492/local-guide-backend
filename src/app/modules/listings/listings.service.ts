@@ -34,11 +34,7 @@ const updateListing = async (id: string, payload: Partial<IListing>) => {
 };
 
 const deleteListing = async (id: string) => {
-  return await Listing.findByIdAndUpdate(
-    id,
-    { isActive: false },
-    { new: true }
-  );
+  return await Listing.findByIdAndDelete(id);
 };
 
 export const listingService = {
