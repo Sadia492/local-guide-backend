@@ -23,7 +23,7 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updateUser = catchAsync(async (req, res) => {
+const updateUser = catchAsync(async (req: Request, res: Response) => {
   const userId = req.params.id;
 
   // Check if someone is trying to update another user
