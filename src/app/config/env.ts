@@ -12,6 +12,10 @@ interface EnvConfig {
   JWT_REFRESH_EXPIRES: string;
   PASSWORD_SALT_ROUND: number;
   FRONTEND_URL: string;
+  CLOUDINARY_CLOUD_NAME: string;
+  CLOUDINARY_API_KEY: string;
+  CLOUDINARY_API_SECRET: string;
+  STRIPE_SECRET_KEY: string;
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -25,6 +29,10 @@ const loadEnvVariables = (): EnvConfig => {
     "JWT_REFRESH_EXPIRES",
     "PASSWORD_SALT_ROUND",
     "FRONTEND_URL",
+    "CLOUDINARY_CLOUD_NAME",
+    "CLOUDINARY_API_KEY",
+    "CLOUDINARY_API_SECRET",
+    "STRIPE_SECRET_KEY",
   ];
   requiredEnvVariables.forEach((key) => {
     if (!process.env[key]) {
@@ -41,6 +49,10 @@ const loadEnvVariables = (): EnvConfig => {
     JWT_REFRESH_EXPIRES: process.env.JWT_REFRESH_EXPIRES!,
     PASSWORD_SALT_ROUND: Number(process.env.PASSWORD_SALT_ROUND)!,
     FRONTEND_URL: process.env.FRONTEND_URL!,
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME!,
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY!,
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET!,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
   };
 };
 

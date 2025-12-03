@@ -11,7 +11,7 @@ const registerUser = async (
   next: NextFunction
 ) => {
   try {
-    const result = await authService.registerUser(req.body);
+    const result = await authService.registerUser(req);
 
     // Set cookies
     res.cookie("accessToken", result.accessToken, {
@@ -62,13 +62,15 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   res.cookie("accessToken", data.accessToken, {
     secure: envVars.NODE_ENV !== "development",
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax", // Change to 'lax' for local development
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   res.cookie("refreshToken", data.refreshToken, {
     secure: envVars.NODE_ENV !== "development",
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax", // Change to 'lax' for local development
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   sendResponse(res, {
@@ -83,12 +85,14 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
     secure: envVars.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax", // Change to 'lax' for local development
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: envVars.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax", // Change to 'lax' for local development
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   sendResponse(res, {
     statusCode: 200,

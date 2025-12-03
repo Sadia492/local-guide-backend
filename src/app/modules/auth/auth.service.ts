@@ -4,8 +4,16 @@ import User from "../users/users.model";
 import AppError from "../../../error/AppError";
 import { envVars } from "../../config/env";
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
+import { fileUploader } from "../../../utils/fileUploader";
+import { Request } from "express";
 
-const registerUser = async (payload: IUser) => {
+const registerUser = async (req: Request) => {
+  const payload = req.body as IUser;
+  if (req.file) {
+    const uploadResult = await fileUploader.uploadToCloudinary(req.file);
+    req.body.profilePicture = uploadResult?.secure_url;
+  }
+
   // Check if user exists
   const existingUser = await User.findOne({ email: payload.email });
   if (existingUser) {
