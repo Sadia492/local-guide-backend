@@ -34,7 +34,44 @@ const registerUser = async (payload: IUser) => {
 
   payload.password = await bcrypt.hash(payload.password, 10);
   const user = await User.create(payload);
-  return user;
+
+  // Generate tokens for immediate login
+  const jwtPayload = {
+    _id: user._id.toString(),
+    email: user.email,
+    role: user.role,
+  };
+
+  // Access token
+  const accessToken = jwt.sign(
+    jwtPayload,
+    envVars.JWT_ACCESS_SECRET as string,
+    { expiresIn: envVars.JWT_ACCESS_EXPIRES } as SignOptions
+  );
+
+  // Refresh token
+  const refreshToken = jwt.sign(
+    jwtPayload,
+    envVars.JWT_REFRESH_SECRET as string,
+    { expiresIn: envVars.JWT_REFRESH_EXPIRES } as SignOptions
+  );
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      bio: user.bio,
+      languages: user.languages,
+      expertise: user.expertise,
+      dailyRate: user.dailyRate,
+      travelPreferences: user.travelPreferences,
+      profilePicture: user.profilePicture,
+    },
+    accessToken,
+    refreshToken,
+  };
 };
 
 const loginUser = async (payload: { email: string; password: string }) => {
@@ -82,6 +119,7 @@ const loginUser = async (payload: { email: string; password: string }) => {
     refreshToken,
   };
 };
+
 export const authService = {
   registerUser,
   loginUser,

@@ -1,22 +1,43 @@
 import httpStatus from "http-status";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../../utils/catchAsync";
 import { authService } from "./auth.service";
 import { sendResponse } from "../../../utils/sendResponse";
 import { envVars } from "../../config/env";
 
-const registerUser = catchAsync(async (req: Request, res: Response) => {
-  const payload = req.body;
+const registerUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const result = await authService.registerUser(req.body);
 
-  const data = await authService.registerUser(payload);
+    // Set cookies
+    res.cookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      sameSite: "lax",
+    });
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "User Registered Successfully",
-    data,
-  });
-});
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      sameSite: "lax",
+    });
+
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "User registered successfully",
+      data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 const loginUser = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
 
@@ -58,4 +79,23 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export { registerUser, loginUser };
+const logoutUser = catchAsync(async (req: Request, res: Response) => {
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: envVars.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: envVars.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Logout successfully",
+    data: null,
+  });
+});
+
+export { registerUser, loginUser, logoutUser };
