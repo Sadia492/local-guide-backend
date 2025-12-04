@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { catchAsync } from "../../../utils/catchAsync";
 import { sendResponse } from "../../../utils/sendResponse";
 import { userService } from "./users.service";
+import { Role } from "./users.interface";
 
 const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.getSingleUser(req.params.id);
@@ -27,7 +28,7 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
   const userId = req.params.id;
 
   // Check if someone is trying to update another user
-  if (req.user.role !== "admin" && req.user._id.toString() !== userId) {
+  if (req.user.role !== Role.ADMIN && req.user._id.toString() !== userId) {
     return sendResponse(res, {
       statusCode: httpStatus.FORBIDDEN,
       success: false,

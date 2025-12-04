@@ -14,14 +14,20 @@ const app = express();
 app.use(express.json());
 app.set("trust proxy", 1);
 app.use(express.urlencoded({ extended: true }));
+// app.use(
+//   cors({
+//     origin: [
+//       // process.env.FRONTEND_URL ||
+//       "http://localhost:3000",
+//       // "http://localhost:5174",
+//     ],
+//     credentials: true,
+//   })
+// );
 app.use(
   cors({
-    origin: [
-      // process.env.FRONTEND_URL ||
-      "http://localhost:3000",
-      // "http://localhost:5174",
-    ],
-    credentials: true,
+    origin: "http://localhost:3000", // Your frontend URL
+    credentials: true, // Allow credentials (cookies)
   })
 );
 
