@@ -23,6 +23,9 @@ const getMyBookings = async (userId: string) => {
     .populate("listing")
     .sort({ createdAt: -1 });
 };
+const getAllBookings = async () => {
+  return await Booking.find({}).populate("listing").sort({ createdAt: -1 });
+};
 
 const updateBookingStatus = async (id: string, status: string) => {
   return await Booking.findByIdAndUpdate(id, { status }, { new: true });
@@ -32,4 +35,5 @@ export const bookingService = {
   createBooking,
   getMyBookings,
   updateBookingStatus,
+  getAllBookings,
 };

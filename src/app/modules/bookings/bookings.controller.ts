@@ -26,6 +26,19 @@ export const getMyBookings = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+export const getAllBookings = catchAsync(
+  async (req: Request, res: Response) => {
+    // const userId = req.user._id;
+    const result = await bookingService.getAllBookings();
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: "All bookings retrieved",
+      data: result,
+    });
+  }
+);
 
 export const updateBookingStatus = catchAsync(
   async (req: Request, res: Response) => {

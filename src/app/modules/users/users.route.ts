@@ -1,13 +1,22 @@
 import { Router } from "express";
 import { Role } from "./users.interface";
 import { auth } from "../../../middleware/auth";
-import { getMe, getSingleUser, updateUser } from "./users.controller";
+import {
+  changeUserRole,
+  deleteUser,
+  getAllUser,
+  getMe,
+  getSingleUser,
+  toggleUserStatus,
+  updateUser,
+} from "./users.controller";
 import { validateRequest } from "../../../middleware/validateRequest";
 import { userZodSchema } from "./users.validate";
 
 const userRoute = Router();
 
 userRoute.get("/me", auth([Role.ADMIN, Role.GUIDE, Role.TOURIST]), getMe);
+userRoute.get("/all", auth([Role.ADMIN]), getAllUser);
 userRoute.get("/:id", getSingleUser);
 userRoute.patch(
   "/:id",
@@ -15,5 +24,8 @@ userRoute.patch(
   validateRequest(userZodSchema.updateUserZodSchema),
   updateUser
 );
+userRoute.delete("/:id", auth([Role.ADMIN]), deleteUser); // NEW
+userRoute.patch("/:id/role", auth([Role.ADMIN]), changeUserRole); // NEW
+userRoute.patch("/:id/status", auth([Role.ADMIN]), toggleUserStatus); // NEW
 
 export default userRoute;

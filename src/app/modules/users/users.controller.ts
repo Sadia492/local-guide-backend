@@ -14,6 +14,15 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const getAllUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await userService.getAllUser();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Users fetched successfully",
+    data: result,
+  });
+});
 const getMe = catchAsync(async (req: Request, res: Response) => {
   const user = req.user; // already a User object
   sendResponse(res, {
@@ -47,4 +56,92 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export { getMe, getSingleUser, updateUser };
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.params.id;
+
+  // Only admin can delete users
+  if (req.user.role !== Role.ADMIN) {
+    return sendResponse(res, {
+      statusCode: httpStatus.FORBIDDEN,
+      success: false,
+      message: "Only admins can delete users",
+      data: null,
+    });
+  }
+
+  const result = await userService.deleteUser(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User deleted successfully",
+    data: result,
+  });
+});
+const changeUserRole = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.params.id;
+  const { role } = req.body;
+
+  // Only admin can change roles
+  if (req.user.role !== Role.ADMIN) {
+    return sendResponse(res, {
+      statusCode: httpStatus.FORBIDDEN,
+      success: false,
+      message: "Only admins can change user roles",
+      data: null,
+    });
+  }
+
+  const result = await userService.changeUserRole(userId, role);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `User role changed to ${role} successfully`,
+    data: result,
+  });
+});
+
+const toggleUserStatus = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.params.id;
+  const { isActive } = req.body;
+
+  // Only admin can change user status
+  if (req.user.role !== Role.ADMIN) {
+    return sendResponse(res, {
+      statusCode: httpStatus.FORBIDDEN,
+      success: false,
+      message: "Only admins can change user status",
+      data: null,
+    });
+  }
+
+  // Validate isActive
+  if (typeof isActive !== "boolean") {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "isActive must be a boolean value",
+      data: null,
+    });
+  }
+
+  const result = await userService.toggleUserStatus(userId, isActive);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `User ${isActive ? "activated" : "deactivated"} successfully`,
+    data: result,
+  });
+});
+
+export {
+  getMe,
+  getSingleUser,
+  updateUser,
+  getAllUser,
+  deleteUser,
+  changeUserRole,
+  toggleUserStatus,
+};

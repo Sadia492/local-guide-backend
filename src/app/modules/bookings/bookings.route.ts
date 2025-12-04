@@ -5,6 +5,7 @@ import { validateRequest } from "../../../middleware/validateRequest";
 import { bookingZodSchema } from "./bookings.validate";
 import {
   createBooking,
+  getAllBookings,
   getMyBookings,
   updateBookingStatus,
 } from "./bookings.controller";
@@ -23,6 +24,7 @@ router.get(
   auth([Role.TOURIST, Role.GUIDE, Role.ADMIN]),
   getMyBookings
 );
+router.get("/all-bookings", auth([Role.ADMIN]), getAllBookings);
 
 // Only admin or guide can update status
 router.patch(
