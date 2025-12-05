@@ -9,6 +9,7 @@ import {
   updateListing,
   deleteListing,
   updateListingStatus,
+  getMyListings,
 } from "./listings.controller";
 import { validateRequest } from "../../../middleware/validateRequest";
 import { auth } from "../../../middleware/auth";
@@ -18,8 +19,8 @@ import { fileUploader } from "../../../utils/fileUploader";
 const router = express.Router();
 
 router.get("/", getAllListings);
+router.get("/my-listings", auth([Role.GUIDE]), getMyListings);
 router.get("/:id", getSingleListing);
-
 router.post(
   "/",
   auth([Role.ADMIN, Role.GUIDE]), // must be logged in

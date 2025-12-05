@@ -85,7 +85,9 @@ const updateListingStatus = async (id: string, isActive: boolean) => {
     }
   );
 };
-
+const getMyListings = async (userId: string) => {
+  return await Listing.find({ guide: userId }).sort({ createdAt: -1 });
+};
 export const listingService = {
   createListing,
   getAllListings,
@@ -93,4 +95,5 @@ export const listingService = {
   updateListing,
   deleteListing,
   updateListingStatus, // Add this new function
+  getMyListings,
 };

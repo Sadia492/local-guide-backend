@@ -3,8 +3,9 @@ import { catchAsync } from "../../../utils/catchAsync";
 import { sendResponse } from "../../../utils/sendResponse";
 import { listingService } from "./listings.service";
 import { Role } from "../users/users.interface";
+import { Request, Response } from "express";
 
-const createListing = catchAsync(async (req, res) => {
+const createListing = catchAsync(async (req: Request, res: Response) => {
   // Only guides can create listings
   // if (req.user.role !== Role.GUIDE) {
   //   return sendResponse(res, {
@@ -27,7 +28,7 @@ const createListing = catchAsync(async (req, res) => {
   });
 });
 
-const getAllListings = catchAsync(async (req, res) => {
+const getAllListings = catchAsync(async (req: Request, res: Response) => {
   const result = await listingService.getAllListings(req.query);
 
   sendResponse(res, {
@@ -38,7 +39,7 @@ const getAllListings = catchAsync(async (req, res) => {
   });
 });
 
-const getSingleListing = catchAsync(async (req, res) => {
+const getSingleListing = catchAsync(async (req: Request, res: Response) => {
   const result = await listingService.getSingleListing(req.params.id);
   if (!result) {
     return sendResponse(res, {
@@ -55,8 +56,18 @@ const getSingleListing = catchAsync(async (req, res) => {
     data: result,
   });
 });
-
-const updateListing = catchAsync(async (req, res) => {
+const getMyListings = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  console.log(userId);
+  const result = await listingService.getMyListings(userId);
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "My listings retrieved",
+    data: result,
+  });
+});
+const updateListing = catchAsync(async (req: Request, res: Response) => {
   const listing = await listingService.getSingleListing(req.params.id);
 
   if (!listing) {
@@ -91,7 +102,7 @@ const updateListing = catchAsync(async (req, res) => {
   });
 });
 
-const deleteListing = catchAsync(async (req, res) => {
+const deleteListing = catchAsync(async (req: Request, res: Response) => {
   const listing = await listingService.getSingleListing(req.params.id);
 
   if (!listing) {
@@ -125,7 +136,7 @@ const deleteListing = catchAsync(async (req, res) => {
     data: null,
   });
 });
-const updateListingStatus = catchAsync(async (req, res) => {
+const updateListingStatus = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { isActive } = req.body;
 
@@ -179,4 +190,5 @@ export {
   updateListing,
   deleteListing,
   updateListingStatus,
+  getMyListings,
 };
