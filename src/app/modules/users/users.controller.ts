@@ -135,6 +135,21 @@ const toggleUserStatus = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const getUserProfileDetails = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user._id; // Get ID from authenticated user
+    console.log(userId);
+
+    const profileData = await userService.getUserProfileDetails(userId);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: "User profile details retrieved successfully",
+      data: profileData,
+    });
+  }
+);
 
 export {
   getMe,
@@ -144,4 +159,5 @@ export {
   deleteUser,
   changeUserRole,
   toggleUserStatus,
+  getUserProfileDetails,
 };

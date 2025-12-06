@@ -7,6 +7,7 @@ import {
   getAllUser,
   getMe,
   getSingleUser,
+  getUserProfileDetails,
   toggleUserStatus,
   updateUser,
 } from "./users.controller";
@@ -17,6 +18,11 @@ const userRoute = Router();
 
 userRoute.get("/me", auth([Role.ADMIN, Role.GUIDE, Role.TOURIST]), getMe);
 userRoute.get("/all", auth([Role.ADMIN]), getAllUser);
+userRoute.get(
+  "/profile-details",
+  auth([Role.ADMIN, Role.GUIDE, Role.TOURIST]),
+  getUserProfileDetails
+);
 userRoute.get("/:id", getSingleUser);
 userRoute.patch(
   "/:id",

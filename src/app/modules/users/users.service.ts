@@ -1,3 +1,7 @@
+import mongoose from "mongoose";
+import { Booking } from "../bookings/bookings.model";
+import Listing from "../listings/listings.model";
+import { Review } from "../reviews/reviews.model";
 import { IUser, Role } from "./users.interface";
 import User from "./users.model";
 
@@ -115,6 +119,86 @@ const toggleUserStatus = async (userId: string, isActive: boolean) => {
   return result;
 };
 
+// users.service.ts - Fixed version
+// users.service.ts - Updated for role-specific responses
+const getUserProfileDetails = async (id: string) => {
+  // Get basic user info
+  const user = await User.findById(id).select("-password");
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Role-specific data structure
+  let profileData: any = {
+    user: user.toObject(),
+  };
+
+  if (user.role === Role.GUIDE) {
+    // Guide-specific data
+    const listings = await Listing.find({
+      guide: user._id,
+      isActive: true,
+    })
+      .select(
+        "title city fee duration images description meetingPoint maxGroupSize"
+      )
+      .sort({ createdAt: -1 })
+      .limit(6);
+
+    // Guide's reviews (reviews about them)
+    const guideReviews = await Review.find({ guide: user._id })
+      .populate("user", "name profilePicture")
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    // Calculate guide statistics
+    const completedBookings = await Booking.countDocuments({
+      "listing.guide": user._id,
+      status: "COMPLETED",
+    });
+
+    const ratingStats = await Review.aggregate([
+      {
+        $match: { guide: user._id },
+      },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    profileData.listings = listings;
+    profileData.reviews = guideReviews; // Reviews about the guide
+  } else if (user.role === Role.TOURIST) {
+    // Tourist-specific data
+    // Only show reviews written by the tourist
+    const touristReviews = await Review.find({ user: user._id })
+      .populate("guide", "name profilePicture")
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    // Tourist's booking stats
+    const touristBookings = await Booking.countDocuments({
+      user: user._id,
+      status: { $in: ["COMPLETED", "CONFIRMED", "PENDING"] },
+    });
+
+    const completedTours = await Booking.countDocuments({
+      user: user._id,
+      status: "COMPLETED",
+    });
+
+    profileData.reviews = touristReviews; // Reviews written by tourist
+
+    // NO listings for tourists
+  }
+
+  return profileData;
+};
 export const userService = {
   getMe,
   getSingleUser,
@@ -123,4 +207,5 @@ export const userService = {
   deleteUser,
   changeUserRole,
   toggleUserStatus,
+  getUserProfileDetails,
 };
