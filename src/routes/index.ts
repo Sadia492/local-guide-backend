@@ -4,6 +4,7 @@ import userRoute from "../app/modules/users/users.route";
 import { listingRoute } from "../app/modules/listings/listings.route";
 import { bookingRoute } from "../app/modules/bookings/bookings.route";
 import { reviewRoute } from "../app/modules/reviews/reviews.route";
+import { wishlistRoutes } from "../app/modules/wishlist/wishlist.route";
 
 const routes = Router();
 
@@ -12,5 +13,6 @@ routes.use("/user", userRoute);
 routes.use("/listing", listingRoute);
 routes.use("/booking", bookingRoute);
 routes.use("/review", reviewRoute);
+routes.use("/wishlist", wishlistRoutes);
 
 export default routes;

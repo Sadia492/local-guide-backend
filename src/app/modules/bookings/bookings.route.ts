@@ -7,6 +7,8 @@ import {
   createBooking,
   getAllBookings,
   getMyBookings,
+  getPendingBookings,
+  getUpcomingBookings,
   updateBookingStatus,
 } from "./bookings.controller";
 
@@ -33,5 +35,8 @@ router.patch(
   validateRequest(bookingZodSchema.updateBookingStatusZodSchema),
   updateBookingStatus
 );
+
+router.get("/upcoming", auth([Role.GUIDE, Role.ADMIN]), getUpcomingBookings);
+router.get("/pending", auth([Role.GUIDE, Role.ADMIN]), getPendingBookings);
 
 export const bookingRoute = router;
