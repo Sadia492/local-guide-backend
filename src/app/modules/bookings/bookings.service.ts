@@ -10,89 +10,6 @@ import { Booking } from "./bookings.model";
 import mongoose from "mongoose";
 import { PaymentStatus } from "../payments/payments.interface";
 
-// const createBooking = async (userId: string, payload: IBooking) => {
-//   const session = await mongoose.startSession();
-
-//   try {
-//     session.startTransaction();
-
-//     // 1. Get listing and user
-//     const listing = await Listing.findById(payload.listing).session(session);
-//     const user = await User.findById(userId).session(session);
-
-//     if (!listing || !user) {
-//       throw new Error("Listing or user not found");
-//     }
-
-//     // Check if guide is available on requested date
-//     const existingBooking = await Booking.findOne({
-//       listing: payload.listing,
-//       date: payload.date,
-//       status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
-//     }).session(session);
-
-//     if (existingBooking) {
-//       throw new Error("Guide is not available on this date");
-//     }
-
-//     // 2. Calculate total price
-//     const totalPrice = listing.fee * payload.groupSize;
-
-//     // 3. Create booking - Status: PENDING (waiting for guide acceptance)
-//     const booking = await Booking.create(
-//       [
-//         {
-//           ...payload,
-//           user: new mongoose.Types.ObjectId(userId),
-//           totalPrice,
-//           status: BookingStatus.PENDING,
-//         },
-//       ],
-//       { session }
-//     );
-
-//     const bookingDoc = booking[0];
-
-//     // 4. Create payment - Status: UNPAID
-//     const payment = await Payment.create(
-//       [
-//         {
-//           booking: bookingDoc._id,
-//           status: PaymentStatus.UNPAID,
-//           method: "stripe",
-//           amount: totalPrice,
-//           currency: "usd",
-//         },
-//       ],
-//       { session }
-//     );
-
-//     const paymentDoc = payment[0];
-
-//     // 5. Update booking with payment reference
-//     bookingDoc.payment = paymentDoc._id;
-//     await bookingDoc.save({ session });
-
-//     // 6. DO NOT create Stripe session yet - wait for guide acceptance
-//     // Guide must accept first, then Stripe session will be created
-
-//     // 7. Commit transaction
-//     await session.commitTransaction();
-
-//     return {
-//       success: true,
-//       bookingId: bookingDoc._id,
-//       message: "Booking request sent to guide. Awaiting acceptance.",
-//     };
-//   } catch (error) {
-//     await session.abortTransaction();
-//     throw error;
-//   } finally {
-//     session.endSession();
-//   }
-// };
-
-// booking.service.ts - Simplified version
 const createBooking = async (userId: string, payload: IBooking) => {
   const session = await mongoose.startSession();
 
@@ -106,7 +23,10 @@ const createBooking = async (userId: string, payload: IBooking) => {
     if (!listing || !user) {
       throw new Error("Listing or user not found");
     }
-
+    // Check if listing is active
+    if (!listing.isActive) {
+      throw new Error("This tour is currently not available for booking");
+    }
     // Check if guide is available on requested date
     const existingBooking = await Booking.findOne({
       listing: payload.listing,
@@ -173,7 +93,6 @@ const createBooking = async (userId: string, payload: IBooking) => {
 };
 
 // Updated updateBookingStatus function
-// Updated updateBookingStatus function
 const updateBookingStatus = async (
   id: string,
   status: string,
@@ -225,80 +144,16 @@ const updateBookingStatus = async (
         throw new Error("User not found");
       }
 
-      // Add debug logs with correct access
-      console.log("=== DEBUG URLS ===");
-      console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
-      console.log("booking.listing type:", typeof listing);
-      console.log("listing._id:", listing._id);
-      console.log("listing._id.toString():", listing._id.toString());
-      console.log("booking._id.toString():", booking._id.toString());
-
-      // Create Stripe checkout session for tourist to pay
-      const stripeSession = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        mode: "payment",
-        customer_email: tourist.email,
-        metadata: {
-          bookingId: booking._id.toString(),
-          paymentId: payment._id.toString(),
-          userId: booking.user.toString(),
-          listingId: listing._id.toString(), // Use listing._id.toString()
-        },
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: `${listing.title} - Tour Booking`, // Use listing.title
-                description: `Booking for ${tourist.name} on ${booking.date}`,
-                images:
-                  listing.images.length > 0 ? [listing.images[0]] : undefined,
-              },
-              unit_amount: booking.totalPrice * 100,
-            },
-            quantity: 1,
-          },
-        ],
-        expires_at: Math.floor(Date.now() / 1000) + 23 * 60 * 60 + 59 * 60,
-        success_url: `${
-          process.env.FRONTEND_URL
-        }/dashboard/tourist/my-trips?payment=success&bookingId=${booking._id.toString()}`,
-        cancel_url: `${
-          process.env.FRONTEND_URL
-        }/tours/${listing._id.toString()}`, // Use listing._id.toString()
-      });
-
-      console.log(
-        "Success URL:",
-        `${
-          process.env.FRONTEND_URL
-        }/dashboard/tourist/my-trips?payment=success&bookingId=${booking._id.toString()}`
-      );
-      console.log(
-        "Cancel URL:",
-        `${process.env.FRONTEND_URL}/tours/${listing._id.toString()}`
-      );
-
-      // Update payment with Stripe session ID and generate a transaction ID
-      const transactionId = uuidv4();
-      payment.transactionId = transactionId;
-      payment.stripeSession = stripeSession;
-      payment.stripeSessionId = stripeSession.id;
-      await payment.save({ session });
-
       // Update booking status to CONFIRMED
       booking.status = BookingStatus.CONFIRMED;
-      await booking.save({ session });
 
+      await booking.save({ session });
       await session.commitTransaction();
 
       return {
         success: true,
         booking: booking,
         message: "Booking confirmed. Tourist has 24 hours to complete payment.",
-        paymentUrl: stripeSession.url,
-        sessionId: stripeSession.id,
-        transactionId: transactionId,
       };
     }
 
@@ -360,6 +215,128 @@ const updateBookingStatus = async (
     session.endSession();
   }
 };
+// Add this function to booking.service.ts
+const createPaymentSession = async (bookingId: string, userId: string) => {
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    // Find booking with listing populated
+    const booking = await Booking.findById(bookingId)
+      .populate("listing")
+      .populate("user")
+      .session(session);
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    // Verify user owns this booking
+    if (booking.user._id.toString() !== userId.toString()) {
+      throw new Error("Not authorized to pay for this booking");
+    }
+
+    // Check if booking is CONFIRMED (not PENDING or CANCELLED)
+    if (booking.status !== BookingStatus.CONFIRMED) {
+      throw new Error("Booking is not in a payable state");
+    }
+
+    // Check if already paid
+    const payment = await Payment.findById(booking.payment).session(session);
+    if (!payment) {
+      throw new Error("Payment not found");
+    }
+
+    if (payment.status === PaymentStatus.PAID) {
+      throw new Error("Booking already paid");
+    }
+
+    // If there's already a valid Stripe session, reuse it
+    if (payment.stripeSessionId) {
+      try {
+        const existingSession = await stripe.checkout.sessions.retrieve(
+          payment.stripeSessionId
+        );
+
+        // Check if session is still valid (not expired or paid)
+        if (existingSession.status === "open") {
+          // Session is still valid, get the URL from the retrieved session
+          await session.commitTransaction();
+          return {
+            success: true,
+            paymentUrl: existingSession.url, // Get URL from Stripe session
+            sessionId: payment.stripeSessionId,
+            message: "Payment session retrieved",
+          };
+        } else if (existingSession.status === "expired") {
+          // Session expired, we'll create a new one
+          console.log("Existing session expired, creating new one");
+        }
+        // If status is "complete" (paid), we shouldn't get here because of earlier check
+      } catch (error) {
+        // Session might be invalid or not found, create new one
+        console.log("Existing session invalid, creating new one");
+      }
+    }
+
+    // Create new Stripe checkout session
+    const listing = booking.listing as any;
+    const tourist = booking.user as any;
+
+    const stripeSession = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      customer_email: tourist.email,
+      metadata: {
+        bookingId: booking._id.toString(),
+        paymentId: payment._id.toString(),
+        userId: booking.user._id.toString(),
+        listingId: listing._id.toString(),
+      },
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `${listing.title} - Tour Booking`,
+              description: `Booking for ${tourist.name} on ${booking.date}`,
+              images:
+                listing.images.length > 0 ? [listing.images[0]] : undefined,
+            },
+            unit_amount: booking.totalPrice * 100,
+          },
+          quantity: 1,
+        },
+      ],
+      expires_at: Math.floor(Date.now() / 1000) + 23 * 60 * 60 + 59 * 60,
+      success_url: `${
+        process.env.FRONTEND_URL
+      }/dashboard/tourist/my-trips?payment=success&bookingId=${booking._id.toString()}`,
+      cancel_url: `${process.env.FRONTEND_URL}/tours/${listing._id.toString()}`,
+    });
+
+    // Update payment with new session info
+    payment.transactionId = payment.transactionId || uuidv4();
+    payment.stripeSession = stripeSession;
+    payment.stripeSessionId = stripeSession.id;
+    await payment.save({ session });
+
+    await session.commitTransaction();
+
+    return {
+      success: true,
+      paymentUrl: stripeSession.url, // URL is in the stripeSession object
+      sessionId: stripeSession.id,
+      message: "Payment session created",
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
 
 const getMyBookings = async (userId: string) => {
   return await Booking.find({ user: userId })
@@ -371,7 +348,10 @@ const getUpcomingBookings = async (userId: string) => {
   today.setHours(0, 0, 0, 0);
   const todayString = today.toISOString();
   // For guides: get bookings for their listings
-  const guideListings = await Listing.find({ guide: userId }).select("_id");
+  const guideListings = await Listing.find({
+    guide: userId,
+    isActive: true,
+  }).select("_id");
   const listingIds = guideListings.map((l) => l._id.toString()); // Convert to string!
 
   if (listingIds.length === 0) {
@@ -416,6 +396,7 @@ const getPendingBookings = async (userId: string) => {
   return await Booking.find({
     listing: { $in: listingIds },
     status: BookingStatus.PENDING, // Only PENDING status
+    isActive: true, // Only active listings
   })
     .populate({
       path: "listing",
@@ -444,4 +425,5 @@ export const bookingService = {
   getAllBookings,
   getUpcomingBookings,
   getPendingBookings,
+  createPaymentSession,
 };

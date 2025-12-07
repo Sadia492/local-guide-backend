@@ -5,6 +5,7 @@ import { validateRequest } from "../../../middleware/validateRequest";
 import { bookingZodSchema } from "./bookings.validate";
 import {
   createBooking,
+  createPaymentSession,
   getAllBookings,
   getMyBookings,
   getPendingBookings,
@@ -31,12 +32,12 @@ router.get("/all-bookings", auth([Role.ADMIN]), getAllBookings);
 // Only admin or guide can update status
 router.patch(
   "/:id/status",
-  auth([Role.ADMIN, Role.GUIDE]),
+  auth([Role.ADMIN, Role.GUIDE, Role.TOURIST]),
   validateRequest(bookingZodSchema.updateBookingStatusZodSchema),
   updateBookingStatus
 );
 
 router.get("/upcoming", auth([Role.GUIDE, Role.ADMIN]), getUpcomingBookings);
 router.get("/pending", auth([Role.GUIDE, Role.ADMIN]), getPendingBookings);
-
+router.post("/:id/create-payment", auth([Role.TOURIST]), createPaymentSession);
 export const bookingRoute = router;

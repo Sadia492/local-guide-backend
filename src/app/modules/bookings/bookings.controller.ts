@@ -130,3 +130,23 @@ export const getPendingBookings = catchAsync(
     });
   }
 );
+// booking.controller.ts
+// booking.controller.ts - Add export for createPaymentSession
+export const createPaymentSession = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    const result = await bookingService.createPaymentSession(id, userId);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: result.message,
+      data: {
+        paymentUrl: result.paymentUrl,
+        sessionId: result.sessionId,
+      },
+    });
+  }
+);

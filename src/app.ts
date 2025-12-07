@@ -33,6 +33,8 @@ app.use(
   cors({
     origin: "http://localhost:3000", // Your frontend URL
     credentials: true, // Allow credentials (cookies)
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   })
 );
 
