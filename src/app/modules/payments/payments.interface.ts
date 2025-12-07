@@ -1,15 +1,20 @@
 import { Types } from "mongoose";
 
 export enum PaymentStatus {
-  PENDING = "PENDING",
   PAID = "PAID",
-  FAILED = "FAILED",
+  UNPAID = "UNPAID",
 }
 export interface IPayment {
-  booking: Types.ObjectId;
+  status: PaymentStatus;
+  method: "stripe" | "cash" | "bank_transfer" | "none";
+  booking: Types.ObjectId; // Booking ID
+  transactionId?: string; // Your own transaction ID (uuid)
+  stripeSessionId?: string; // Stripe's session ID
   amount: number;
   currency: string;
-  status: PaymentStatus;
-  paymentIntentId: string;
-  createdAt?: Date;
+  paymentDate: Date;
+  refundId?: string;
+  refundDate?: Date;
+  stripeSession?: any; // Store full Stripe session data
+  notes?: string;
 }

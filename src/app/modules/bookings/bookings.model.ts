@@ -36,6 +36,10 @@ const bookingSchema = new Schema<IBooking>(
       enum: Object.values(BookingStatus),
       default: BookingStatus.PENDING,
     },
+    payment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
+    },
   },
   { timestamps: true, versionKey: false }
 );

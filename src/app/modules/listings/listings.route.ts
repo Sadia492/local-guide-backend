@@ -20,7 +20,11 @@ const router = express.Router();
 
 router.get("/", getAllListings);
 router.get("/my-listings", auth([Role.GUIDE]), getMyListings);
-router.get("/:id", getSingleListing);
+router.get(
+  "/:id",
+  auth([Role.GUIDE, Role.ADMIN, Role.TOURIST]),
+  getSingleListing
+);
 router.post(
   "/",
   auth([Role.ADMIN, Role.GUIDE]), // must be logged in

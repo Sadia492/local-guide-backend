@@ -5,12 +5,17 @@ import cookieParser from "cookie-parser";
 import { notFoundRoute } from "./middleware/notFoundRoute";
 import dotenv from "dotenv";
 import { globalErrorHandler } from "./middleware/globalErrorHandler";
+import { PaymentController } from "./app/modules/payments/payments.controller";
 
 // Load env vars
 dotenv.config();
 
 const app = express();
-
+app.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  PaymentController.handleStripeWebhookEvent
+);
 app.use(express.json());
 app.set("trust proxy", 1);
 app.use(express.urlencoded({ extended: true }));

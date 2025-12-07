@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { catchAsync } from "../../../utils/catchAsync";
 import { sendResponse } from "../../../utils/sendResponse";
 import { bookingService } from "./bookings.service";
+import { BookingStatus } from "./bookings.interface";
+import { Role } from "../users/users.interface";
 
 export const createBooking = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user._id;
@@ -40,23 +42,49 @@ export const getAllBookings = catchAsync(
   }
 );
 
+// export const updateBookingStatus = catchAsync(
+//   async (req: Request, res: Response) => {
+//     const { id } = req.params;
+//     const result = await bookingService.updateBookingStatus(
+//       id,
+//       req.body.status
+//     );
+
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: 200,
+//       message: "Booking status updated",
+//       data: result,
+//     });
+//   }
+// );
+
+// booking.controller.ts
 export const updateBookingStatus = catchAsync(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const result = await bookingService.updateBookingStatus(
-      id,
-      req.body.status
-    );
+    const { status } = req.body;
+    const user = req.user; // Assuming you have user in req
+
+    let result;
+
+    // If guide is confirming booking, pass guideId
+    if (status === BookingStatus.CONFIRMED && user.role === Role.GUIDE) {
+      result = await bookingService.updateBookingStatus(id, status, user._id);
+    }
+    // For other status updates (cancellation, etc.)
+    else {
+      result = await bookingService.updateBookingStatus(id, status);
+    }
 
     sendResponse(res, {
-      success: true,
       statusCode: 200,
-      message: "Booking status updated",
+      success: true,
+      message: result.message,
       data: result,
     });
   }
 );
-
 export const getUpcomingBookings = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user._id;

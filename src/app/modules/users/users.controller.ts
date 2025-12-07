@@ -137,10 +137,9 @@ const toggleUserStatus = catchAsync(async (req: Request, res: Response) => {
 });
 const getUserProfileDetails = catchAsync(
   async (req: Request, res: Response) => {
-    const userId = req.user._id; // Get ID from authenticated user
-    console.log(userId);
+    const { id } = req.params;
 
-    const profileData = await userService.getUserProfileDetails(userId);
+    const profileData = await userService.getUserProfileDetails(id);
 
     sendResponse(res, {
       success: true,

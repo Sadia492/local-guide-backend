@@ -1,39 +1,34 @@
-// import catchAsync from "../../../utils/catchAsync";
-// import { paymentService } from "./payment.service";
+import { Request, Response } from "express";
 
-// export const paymentController = {
-//   createPaymentIntent: catchAsync(async (req, res) => {
-//     const { bookingId } = req.body;
+import { catchAsync } from "../../../utils/catchAsync";
+import { stripe } from "../../../utils/stripe";
+import { sendResponse } from "../../../utils/sendResponse";
+import { PaymentService } from "./payments.service";
 
-//     const result = await paymentService.createPaymentIntent(
-//       bookingId,
-//       req.user._id
-//     );
+const handleStripeWebhookEvent = catchAsync(
+  async (req: Request, res: Response) => {
+    const sig = req.headers["stripe-signature"] as string;
+    const webhookSecret =
+      "whsec_930c987f6394ea021c0c955d5afac3c7c2bcc600d43d92a4157301d628d9d680";
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Payment Intent created",
-//       data: result,
-//     });
-//   }),
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err: any) {
+      console.error("⚠️ Webhook signature verification failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    const result = await PaymentService.handleStripeWebhookEvent(event);
 
-//   // Webhook endpoint
-//   handleStripeWebhook: catchAsync(async (req, res) => {
-//     const sig = req.headers["stripe-signature"];
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Webhook req send successfully",
+      data: result,
+    });
+  }
+);
 
-//     let event;
-
-//     try {
-//       event = paymentService.constructWebhookEvent(req.rawBody, sig as string);
-//     } catch (err: any) {
-//       return res.status(400).send(`Webhook Error: ${err.message}`);
-//     }
-
-//     if (event.type === "payment_intent.succeeded") {
-//       const paymentIntent = event.data.object;
-//       await paymentService.confirmPayment(paymentIntent.id);
-//     }
-
-//     res.json({ received: true });
-//   }),
-// };
+export const PaymentController = {
+  handleStripeWebhookEvent,
+};

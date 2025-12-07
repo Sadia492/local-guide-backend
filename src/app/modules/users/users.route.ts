@@ -19,7 +19,7 @@ const userRoute = Router();
 userRoute.get("/me", auth([Role.ADMIN, Role.GUIDE, Role.TOURIST]), getMe);
 userRoute.get("/all", auth([Role.ADMIN]), getAllUser);
 userRoute.get(
-  "/profile-details",
+  "/profile-details/:id",
   auth([Role.ADMIN, Role.GUIDE, Role.TOURIST]),
   getUserProfileDetails
 );

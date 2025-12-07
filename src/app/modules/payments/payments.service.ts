@@ -1,64 +1,98 @@
-// // import Stripe from "stripe";
-// // import envVars from "../../../config/envVars";
-// // import { Booking } from "../booking/booking.model";
-// // import { Payment } from "./payment.model";
-// // import AppError from "../../errors/AppError";
+// payments.service.ts - CORRECTED
+import Stripe from "stripe";
+import { Booking } from "../bookings/bookings.model";
+import { BookingStatus } from "../bookings/bookings.interface";
+import { PaymentStatus } from "./payments.interface";
+import { Payment } from "./payments.model";
+import mongoose from "mongoose";
 
-// import AppError from "../../../error/AppError";
-// import { envVars } from "../../config/env";
-// import { Booking } from "../bookings/bookings.model";
-// import { PaymentStatus } from "./payments.interface";
-// import { Payment } from "./payments.model";
+const handleStripeWebhookEvent = async (event: any) => {
+  switch (event.type) {
+    // payments.service.ts - In webhook handler
+    case "checkout.session.completed": {
+      const session = event.data.object;
+      const bookingId = session.metadata?.bookingId;
+      const paymentId = session.metadata?.paymentId;
 
-// const stripe = new Stripe(envVars.STRIPE_SECRET_KEY as string);
+      if (!bookingId || !paymentId) {
+        console.error("No bookingId or paymentId found in session metadata");
+        break;
+      }
 
-// export const paymentService = {
-//   // Create a Stripe PaymentIntent
-//   createPaymentIntent: async (bookingId: string, userId: string) => {
-//     const booking = await Booking.findOne({ _id: bookingId, user: userId })
-//       .populate("listing");
+      const mongooseSession = await mongoose.startSession();
+      try {
+        mongooseSession.startTransaction();
 
-//     if (!booking) {
-//       throw new AppError(404, "Booking not found");
-//     }
+        const booking = await Booking.findById(bookingId).session(
+          mongooseSession
+        );
+        const payment = await Payment.findById(paymentId).session(
+          mongooseSession
+        );
 
-//     const amount = booking.totalPrice * 100; // cents
+        if (!booking || !payment) {
+          throw new Error("Booking or Payment not found");
+        }
 
-//     const paymentIntent = await stripe.paymentIntents.create({
-//       amount,
-//       currency: "usd",
-//       metadata: {
-//         bookingId: booking._id.toString(),
-//         userId: userId,
-//       },
-//     });
+        // Verify booking is still CONFIRMED
+        if (booking.status !== BookingStatus.CONFIRMED) {
+          throw new Error("Booking is not in CONFIRMED state for payment");
+        }
 
-//     // Save payment to DB
-//     const payment = await Payment.create({
-//       booking: booking._id,
-//       amount: booking.totalPrice,
-//       currency: "usd",
-//       status: PaymentStatus.PENDING,
-//       paymentIntentId: paymentIntent.id,
-//     });
+        // Update payment status to PAID
+        payment.status = PaymentStatus.PAID;
+        payment.stripeSessionId = session.id; // Store Stripe session ID
+        payment.paymentDate = new Date();
+        payment.stripeSession = session;
+        await payment.save({ session: mongooseSession });
 
-//     return {
-//       clientSecret: paymentIntent.client_secret,
-//       payment,
-//     };
-//   },
+        // Update booking status to COMPLETED
+        booking.status = BookingStatus.COMPLETED;
+        await booking.save({ session: mongooseSession });
 
-//   // Confirm payment (from webhook)
-//   confirmPayment: async (paymentIntentId: string) => {
-//     const payment = await Payment.findOne({ paymentIntentId });
+        await mongooseSession.commitTransaction();
 
-//     if (!payment) throw new AppError(404, "Payment not found");
+        console.log(
+          `Payment completed. Booking ${bookingId} is now COMPLETED.`
+        );
+      } catch (error) {
+        await mongooseSession.abortTransaction();
+        console.error("Error processing payment webhook:", error);
+      } finally {
+        mongooseSession.endSession();
+      }
+      break;
+    }
+    // Handle payment failures - but booking stays CONFIRMED for retry
+    case "checkout.session.expired":
+    case "checkout.session.async_payment_failed":
+    case "payment_intent.payment_failed": {
+      const session = event.data.object;
+      const bookingId = session.metadata?.bookingId;
+      const paymentId = session.metadata?.paymentId;
 
-//     payment.status = PaymentStatus.PAID;
-//     await payment.save();
+      if (bookingId && paymentId) {
+        // Only update payment status to UNPAID
+        await Payment.findByIdAndUpdate(paymentId, {
+          status: PaymentStatus.UNPAID,
+        });
 
-//     await Booking.findByIdAndUpdate(payment.booking, { status: "PAID" });
+        // Booking stays CONFIRMED - tourist can try payment again
+        // DO NOT cancel booking automatically
+        console.log(
+          `Payment failed for booking: ${bookingId}. Booking remains CONFIRMED for retry.`
+        );
+      }
+      break;
+    }
 
-//     return payment;
-//   },
-// };
+    default:
+      console.log(`Unhandled event type: ${event.type}`);
+  }
+
+  return { success: true, event: event.type };
+};
+
+export const PaymentService = {
+  handleStripeWebhookEvent,
+};
