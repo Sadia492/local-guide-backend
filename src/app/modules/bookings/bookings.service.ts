@@ -396,7 +396,6 @@ const getPendingBookings = async (userId: string) => {
   return await Booking.find({
     listing: { $in: listingIds },
     status: BookingStatus.PENDING, // Only PENDING status
-    isActive: true, // Only active listings
   })
     .populate({
       path: "listing",

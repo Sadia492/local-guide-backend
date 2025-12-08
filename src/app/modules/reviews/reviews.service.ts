@@ -12,7 +12,7 @@ export const reviewService = {
     const hasBooking = await Booking.findOne({
       user: userId,
       listing,
-      status: BookingStatus.CONFIRMED,
+      status: BookingStatus.COMPLETED,
     });
 
     if (!hasBooking) {
@@ -38,6 +38,21 @@ export const reviewService = {
     });
 
     return review;
+  },
+
+  getReviewsByUser: async (userId: string) => {
+    const reviews = await Review.find({ user: userId })
+      .populate({
+        path: "listing",
+        select: "title city images fee duration guide",
+        populate: {
+          path: "guide",
+          select: "name profilePicture",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    return reviews;
   },
 
   getReviewsOfListing: async (listingId: string) => {

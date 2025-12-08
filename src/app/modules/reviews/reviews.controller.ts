@@ -27,6 +27,18 @@ const getListingReviews = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getUserReviews = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.params.userId;
+  const result = await reviewService.getReviewsByUser(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User reviews fetched successfully",
+    data: result,
+  });
+});
+
 const updateReview = catchAsync(async (req: Request, res: Response) => {
   const result = await reviewService.updateReview(
     req.user._id,
@@ -53,4 +65,10 @@ const deleteReview = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export { createReview, getListingReviews, updateReview, deleteReview };
+export {
+  createReview,
+  getListingReviews,
+  updateReview,
+  deleteReview,
+  getUserReviews,
+};

@@ -132,11 +132,15 @@ const getUserProfileDetails = async (id: string) => {
   // Role-specific data structure
   let profileData: any = {
     user: user.toObject(),
+    listings: [],
+    reviews: [],
+    stats: {},
   };
 
   if (user.role === Role.GUIDE) {
     // Guide-specific data
-    const listings = await Listing.find({
+    // 1. Get guide's active listings
+    const listings = (await Listing.find({
       guide: user._id,
       isActive: true,
     })
@@ -144,23 +148,55 @@ const getUserProfileDetails = async (id: string) => {
         "title city fee duration images description meetingPoint maxGroupSize"
       )
       .sort({ createdAt: -1 })
-      .limit(6);
+      .limit(6)) as mongoose.Document[];
 
-    // Guide's reviews (reviews about them)
-    const guideReviews = await Review.find({ guide: user._id })
-      .populate("user", "name profilePicture")
+    // 2. Get reviews for guide's listings
+    const listingIds = listings.map((listing) => listing._id);
+
+    // Get ALL reviews for this guide's listings
+    const guideReviews = (await Review.find({
+      listing: { $in: listingIds },
+    })
+      .populate({
+        path: "user",
+        select: "name profilePicture",
+        model: User, // Explicitly specify the model
+      })
+      .populate({
+        path: "listing",
+        select: "title",
+        model: Listing,
+      })
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(10)) as mongoose.Document[];
 
-    // Calculate guide statistics
-    const completedBookings = await Booking.countDocuments({
-      "listing.guide": user._id,
-      status: "COMPLETED",
+    // 3. Transform reviews to ensure we have user names
+    const transformedReviews = guideReviews.map((review) => {
+      const reviewObj = review.toObject();
+      return {
+        _id: reviewObj._id,
+        rating: reviewObj.rating,
+        comment: reviewObj.comment,
+        createdAt: reviewObj.createdAt,
+        user: reviewObj.user
+          ? {
+              name: reviewObj.user.name || "Traveler",
+              profilePicture: reviewObj.user.profilePicture || "",
+            }
+          : undefined,
+        // Add listing info if needed
+        listingTitle: reviewObj.listing?.title || "",
+      };
     });
 
-    const ratingStats = await Review.aggregate([
+    // 4. Get guide statistics
+    const totalReviews = await Review.countDocuments({
+      listing: { $in: listingIds },
+    });
+
+    const averageRating = await Review.aggregate([
       {
-        $match: { guide: user._id },
+        $match: { listing: { $in: listingIds } },
       },
       {
         $group: {
@@ -171,17 +207,71 @@ const getUserProfileDetails = async (id: string) => {
       },
     ]);
 
+    const completedBookings = await Booking.countDocuments({
+      listing: { $in: listingIds },
+      status: "COMPLETED",
+    });
+
+    const totalBookings = await Booking.countDocuments({
+      listing: { $in: listingIds },
+      status: { $in: ["CONFIRMED", "COMPLETED"] },
+    });
+
     profileData.listings = listings;
-    profileData.reviews = guideReviews; // Reviews about the guide
+    profileData.reviews = transformedReviews; // Use transformed reviews
+
+    profileData.stats = {
+      totalReviews,
+      averageRating: averageRating[0]?.averageRating || 0,
+      totalBookings,
+      completedBookings,
+      activeTours: listings.length,
+    };
   } else if (user.role === Role.TOURIST) {
     // Tourist-specific data
-    // Only show reviews written by the tourist
-    const touristReviews = await Review.find({ user: user._id })
-      .populate("guide", "name profilePicture")
+    // 1. Get reviews written by the tourist
+    const touristReviews = (await Review.find({
+      user: user._id,
+    })
+      .populate({
+        path: "listing",
+        select: "title guide",
+        populate: {
+          path: "guide",
+          select: "name profilePicture",
+          model: User,
+        },
+      })
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(10)) as mongoose.Document[];
 
-    // Tourist's booking stats
+    // 2. Transform reviews to ensure we have guide names
+    const transformedReviews = touristReviews.map((review) => {
+      const reviewObj = review.toObject();
+      const listing = reviewObj.listing;
+
+      return {
+        _id: reviewObj._id,
+        rating: reviewObj.rating,
+        comment: reviewObj.comment,
+        createdAt: reviewObj.createdAt,
+        // The user who wrote the review (should be the tourist)
+        user: {
+          name: user.name,
+          profilePicture: user.profilePicture,
+        },
+        // The guide who was reviewed
+        guide: listing?.guide
+          ? {
+              name: listing.guide.name || "Guide",
+              profilePicture: listing.guide.profilePicture || "",
+            }
+          : undefined,
+        listingTitle: listing?.title || "",
+      };
+    });
+
+    // 3. Get tourist's booking stats
     const touristBookings = await Booking.countDocuments({
       user: user._id,
       status: { $in: ["COMPLETED", "CONFIRMED", "PENDING"] },
@@ -192,9 +282,50 @@ const getUserProfileDetails = async (id: string) => {
       status: "COMPLETED",
     });
 
-    profileData.reviews = touristReviews; // Reviews written by tourist
+    const pendingTours = await Booking.countDocuments({
+      user: user._id,
+      status: "PENDING",
+    });
+
+    const confirmedTours = await Booking.countDocuments({
+      user: user._id,
+      status: "CONFIRMED",
+    });
+
+    // 4. Calculate average rating given by tourist
+    const touristRatingStats = await Review.aggregate([
+      {
+        $match: { user: user._id },
+      },
+      {
+        $group: {
+          _id: null,
+          averageRatingGiven: { $avg: "$rating" },
+          totalReviewsWritten: { $sum: 1 },
+        },
+      },
+    ]);
+
+    profileData.reviews = transformedReviews; // Use transformed reviews
+
+    profileData.stats = {
+      totalBookings: touristBookings,
+      completedTours,
+      pendingTours,
+      confirmedTours,
+      totalReviewsWritten: touristRatingStats[0]?.totalReviewsWritten || 0,
+      averageRatingGiven: touristRatingStats[0]?.averageRatingGiven || 0,
+    };
 
     // NO listings for tourists
+    profileData.listings = [];
+  } else if (user.role === Role.ADMIN) {
+    // Admin-specific data
+    profileData.stats = {
+      role: "Administrator",
+      isVerified: user.isVerified || false,
+      isActive: user.isActive || false,
+    };
   }
 
   return profileData;

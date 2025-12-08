@@ -4,6 +4,7 @@ import {
   getListingReviews,
   updateReview,
   deleteReview,
+  getUserReviews,
 } from "./reviews.controller";
 import { reviewsZodSchema } from "./reviews.validate";
 import { auth } from "../../../middleware/auth";
@@ -19,8 +20,17 @@ router.post(
   createReview
 );
 
-router.get("/listing/:listingId", getListingReviews);
+router.get(
+  "/listing/:listingId",
+  auth([Role.TOURIST, Role.GUIDE, Role.ADMIN]),
+  getListingReviews
+);
 
+router.get(
+  "/user/:userId",
+  auth([Role.TOURIST, Role.GUIDE, Role.ADMIN]),
+  getUserReviews
+);
 router.patch(
   "/:id",
   auth([Role.TOURIST, Role.GUIDE, Role.ADMIN]),
