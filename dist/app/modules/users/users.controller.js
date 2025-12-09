@@ -39,7 +39,7 @@ const getAllUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
 }));
 exports.getAllUser = getAllUser;
 const getMe = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = req.user; // already a User object
+    const user = req.user;
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_1.default.OK,
@@ -50,7 +50,6 @@ const getMe = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 
 exports.getMe = getMe;
 const updateUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.id;
-    // Check if someone is trying to update another user
     if (req.user.role !== users_interface_1.Role.ADMIN && req.user._id.toString() !== userId) {
         return (0, sendResponse_1.sendResponse)(res, {
             statusCode: http_status_1.default.FORBIDDEN,
@@ -70,7 +69,6 @@ const updateUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
 exports.updateUser = updateUser;
 const deleteUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.id;
-    // Only admin can delete users
     if (req.user.role !== users_interface_1.Role.ADMIN) {
         return (0, sendResponse_1.sendResponse)(res, {
             statusCode: http_status_1.default.FORBIDDEN,
@@ -91,7 +89,6 @@ exports.deleteUser = deleteUser;
 const changeUserRole = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.id;
     const { role } = req.body;
-    // Only admin can change roles
     if (req.user.role !== users_interface_1.Role.ADMIN) {
         return (0, sendResponse_1.sendResponse)(res, {
             statusCode: http_status_1.default.FORBIDDEN,
@@ -112,7 +109,6 @@ exports.changeUserRole = changeUserRole;
 const toggleUserStatus = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.id;
     const { isActive } = req.body;
-    // Only admin can change user status
     if (req.user.role !== users_interface_1.Role.ADMIN) {
         return (0, sendResponse_1.sendResponse)(res, {
             statusCode: http_status_1.default.FORBIDDEN,
@@ -121,7 +117,6 @@ const toggleUserStatus = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(vo
             data: null,
         });
     }
-    // Validate isActive
     if (typeof isActive !== "boolean") {
         return (0, sendResponse_1.sendResponse)(res, {
             statusCode: http_status_1.default.BAD_REQUEST,

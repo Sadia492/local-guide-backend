@@ -43,7 +43,6 @@ const userSchema = new mongoose_1.Schema({
             type: String,
         },
     ],
-    // GUIDE FIELDS
     expertise: [
         {
             type: String,
@@ -53,13 +52,11 @@ const userSchema = new mongoose_1.Schema({
         type: Number,
         min: 0,
     },
-    // TOURIST FIELDS
     travelPreferences: [
         {
             type: String,
         },
     ],
-    // SYSTEM FIELDS
     isVerified: {
         type: Boolean,
         default: false,

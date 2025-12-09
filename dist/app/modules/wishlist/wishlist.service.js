@@ -16,12 +16,10 @@ exports.wishlistService = void 0;
 const listings_model_1 = __importDefault(require("../listings/listings.model"));
 const wishlist_model_1 = require("./wishlist.model");
 const addToWishlist = (userId, listingId) => __awaiter(void 0, void 0, void 0, function* () {
-    // Check if listing exists
     const listing = yield listings_model_1.default.findById(listingId);
     if (!listing) {
         throw new Error("Listing not found");
     }
-    // Check if already in wishlist
     const existingWishlistItem = yield wishlist_model_1.Wishlist.findOne({
         user: userId,
         listing: listingId,
@@ -29,7 +27,6 @@ const addToWishlist = (userId, listingId) => __awaiter(void 0, void 0, void 0, f
     if (existingWishlistItem) {
         throw new Error("Listing already in wishlist");
     }
-    // Add to wishlist
     const wishlistItem = yield wishlist_model_1.Wishlist.create({
         user: userId,
         listing: listingId,

@@ -52,6 +52,5 @@ const reviewSchema = new mongoose_1.Schema({
     timestamps: true,
     versionKey: false,
 });
-// Prevent duplicate reviews
 reviewSchema.index({ listing: 1, user: 1 }, { unique: true });
 exports.Review = (0, mongoose_1.model)("Review", reviewSchema);

@@ -12,7 +12,7 @@ userRoute.get("/all", (0, auth_1.auth)([users_interface_1.Role.ADMIN]), users_co
 userRoute.get("/profile-details/:id", (0, auth_1.auth)([users_interface_1.Role.ADMIN, users_interface_1.Role.GUIDE, users_interface_1.Role.TOURIST]), users_controller_1.getUserProfileDetails);
 userRoute.get("/:id", users_controller_1.getSingleUser);
 userRoute.patch("/:id", (0, auth_1.auth)([users_interface_1.Role.ADMIN, users_interface_1.Role.GUIDE, users_interface_1.Role.TOURIST]), (0, validateRequest_1.validateRequest)(users_validate_1.userZodSchema.updateUserZodSchema), users_controller_1.updateUser);
-userRoute.delete("/:id", (0, auth_1.auth)([users_interface_1.Role.ADMIN]), users_controller_1.deleteUser); // NEW
-userRoute.patch("/:id/role", (0, auth_1.auth)([users_interface_1.Role.ADMIN]), users_controller_1.changeUserRole); // NEW
-userRoute.patch("/:id/status", (0, auth_1.auth)([users_interface_1.Role.ADMIN]), users_controller_1.toggleUserStatus); // NEW
+userRoute.delete("/:id", (0, auth_1.auth)([users_interface_1.Role.ADMIN]), users_controller_1.deleteUser);
+userRoute.patch("/:id/role", (0, auth_1.auth)([users_interface_1.Role.ADMIN]), users_controller_1.changeUserRole);
+userRoute.patch("/:id/status", (0, auth_1.auth)([users_interface_1.Role.ADMIN]), users_controller_1.toggleUserStatus);
 exports.default = userRoute;

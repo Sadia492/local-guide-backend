@@ -17,13 +17,11 @@ const globalErrorHandler = (err, req, res, next) => {
     let errorSources = [];
     let statusCode = 500;
     let message = "Something Went Wrong!!";
-    //Duplicate error
     if (err.code === 11000) {
         const simplifiedError = (0, duplicateError_1.handlerDuplicateError)(err);
         statusCode = simplifiedError.statusCode;
         message = simplifiedError.message;
     }
-    // Object ID error / Cast Error
     else if (err.name === "CastError") {
         const simplifiedError = (0, castError_1.handleCastError)(err);
         statusCode = simplifiedError.statusCode;
@@ -35,7 +33,6 @@ const globalErrorHandler = (err, req, res, next) => {
         message = simplifiedError.message;
         errorSources = simplifiedError.errorSources;
     }
-    //Mongoose Validation Error
     else if (err.name === "ValidationError") {
         const simplifiedError = (0, validationError_1.handlerValidationError)(err);
         statusCode = simplifiedError.statusCode;

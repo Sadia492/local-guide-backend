@@ -29,7 +29,6 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 startServer();
-// unhandled rejection
 process.on("unhandledRejection", (err) => {
     console.log("unhandled Rejection detected... Server shutting down..", err);
     if (server) {
@@ -39,7 +38,6 @@ process.on("unhandledRejection", (err) => {
     }
     process.exit(1);
 });
-// uncaught exception
 process.on("uncaughtException", (err) => {
     console.log("uncaught Exception detected... Server shutting down..", err);
     if (server) {
@@ -49,7 +47,6 @@ process.on("uncaughtException", (err) => {
     }
     process.exit(1);
 });
-// signal termination system aws or vercel gives
 process.on("SIGTERM", () => {
     console.log("SIGTERM signal received... Server shutting down..");
     if (server) {
@@ -59,7 +56,6 @@ process.on("SIGTERM", () => {
     }
     process.exit(1);
 });
-// if i manually shut down the server
 process.on("SIGINT", () => {
     console.log("SIGINT signal received... Server shutting down..");
     if (server) {

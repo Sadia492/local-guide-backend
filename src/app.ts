@@ -18,20 +18,18 @@ app.post(
   PaymentController.handleStripeWebhookEvent
 );
 
-app.use(
-  cors({
-    origin: [
-      "https://local-guide-frontend-rho.vercel.app",
-      "http://localhost:3000",
-    ],
-    credentials: true,
-  })
-);
-app.options("*", cors());
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
+// CORS configuration
+const corsOptions = {
+  origin: ["https://local-guide-frontend-rho.vercel.app", /\.vercel\.app$/],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+};
+
+app.use(cors(corsOptions));
+
+// REMOVE THIS: app.options("*", cors(corsOptions));
+// The cors() middleware already handles OPTIONS!
 app.use(express.json());
 app.set("trust proxy", 1);
 app.use(express.urlencoded({ extended: true }));

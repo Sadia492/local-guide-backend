@@ -22,7 +22,6 @@ exports.reviewService = {
     createReview: (userId, payload) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         const { listing, rating, comment } = payload;
-        // Check booking existence (only booked users can review)
         const hasBooking = yield bookings_model_1.Booking.findOne({
             user: userId,
             listing,
@@ -31,14 +30,12 @@ exports.reviewService = {
         if (!hasBooking) {
             throw new AppError_1.default(403, "You can only review listings you booked");
         }
-        // Create review
         const review = yield reviews_model_1.Review.create({
             listing,
             user: userId,
             rating,
             comment,
         });
-        // Update average rating
         const stats = yield reviews_model_1.Review.aggregate([
             { $match: { listing } },
             { $group: { _id: "$listing", avgRating: { $avg: "$rating" } } },

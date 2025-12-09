@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Wishlist = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-// Wishlist Model
 const wishlistSchema = new mongoose_1.default.Schema({
     user: {
         type: mongoose_1.default.Schema.Types.ObjectId,
@@ -25,6 +24,5 @@ const wishlistSchema = new mongoose_1.default.Schema({
     timestamps: true,
     versionKey: false,
 });
-// Add indexes for quick lookup
 wishlistSchema.index({ user: 1, listing: 1 }, { unique: true });
 exports.Wishlist = mongoose_1.default.model("Wishlist", wishlistSchema);

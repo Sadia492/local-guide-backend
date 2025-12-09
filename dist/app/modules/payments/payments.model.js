@@ -19,14 +19,14 @@ const paymentSchema = new mongoose_1.Schema({
         enum: ["stripe", "cash", "bank_transfer", "none"],
         required: true,
     },
-    transactionId: String, // Your uuid
-    stripeSessionId: String, // Stripe's session ID
+    transactionId: String,
+    stripeSessionId: String,
     amount: { type: Number, required: true },
     currency: { type: String, default: "usd" },
     paymentDate: { type: Date, default: Date.now },
     refundId: String,
     refundDate: Date,
-    stripeSession: mongoose_1.Schema.Types.Mixed, // Full session object
+    stripeSession: mongoose_1.Schema.Types.Mixed,
     notes: String,
 }, { timestamps: true, versionKey: false });
 exports.Payment = (0, mongoose_1.model)("Payment", paymentSchema);

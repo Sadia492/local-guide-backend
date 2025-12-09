@@ -19,15 +19,6 @@ const sendResponse_1 = require("../../../utils/sendResponse");
 const listings_service_1 = require("./listings.service");
 const users_interface_1 = require("../users/users.interface");
 const createListing = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Only guides can create listings
-    // if (req.user.role !== Role.GUIDE) {
-    //   return sendResponse(res, {
-    //     success: false,
-    //     statusCode: httpStatus.FORBIDDEN,
-    //     message: "Only guides can create tour listings",
-    //     data: null,
-    //   });
-    // }
     const payload = Object.assign(Object.assign({}, req.body), { guide: req.user._id });
     const result = yield listings_service_1.listingService.createListing(req);
     (0, sendResponse_1.sendResponse)(res, {
@@ -87,7 +78,6 @@ const updateListing = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 
             data: null,
         });
     }
-    // Only owner guide or admin can update
     if (req.user.role !== users_interface_1.Role.ADMIN &&
         listing.guide._id.toString() !== req.user._id.toString()) {
         return (0, sendResponse_1.sendResponse)(res, {
@@ -116,7 +106,6 @@ const deleteListing = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 
             data: null,
         });
     }
-    // Only owner guide or admin can delete
     if (req.user.role !== "ADMIN" &&
         listing.guide._id.toString() !== req.user._id.toString()) {
         return (0, sendResponse_1.sendResponse)(res, {
@@ -138,7 +127,6 @@ exports.deleteListing = deleteListing;
 const updateListingStatus = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { isActive } = req.body;
-    // Validate input
     if (typeof isActive !== "boolean") {
         return (0, sendResponse_1.sendResponse)(res, {
             success: false,
@@ -156,7 +144,6 @@ const updateListingStatus = (0, catchAsync_1.catchAsync)((req, res) => __awaiter
             data: null,
         });
     }
-    // Only owner guide or admin can update status
     if (req.user.role !== users_interface_1.Role.ADMIN &&
         listing.guide._id.toString() !== req.user._id.toString()) {
         return (0, sendResponse_1.sendResponse)(res, {

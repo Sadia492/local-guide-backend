@@ -21,7 +21,6 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const handleStripeWebhookEvent = (event) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
     switch (event.type) {
-        // payments.service.ts - In webhook handler
         case "checkout.session.completed": {
             const session = event.data.object;
             const bookingId = (_a = session.metadata) === null || _a === void 0 ? void 0 : _a.bookingId;
@@ -37,17 +36,14 @@ const handleStripeWebhookEvent = (event) => __awaiter(void 0, void 0, void 0, fu
                 if (!booking || !payment) {
                     throw new Error("Booking or Payment not found");
                 }
-                // Verify booking is still CONFIRMED
                 if (booking.status !== bookings_interface_1.BookingStatus.CONFIRMED) {
                     throw new Error("Booking is not in CONFIRMED state for payment");
                 }
-                // Update payment status to PAID
                 payment.status = payments_interface_1.PaymentStatus.PAID;
-                payment.stripeSessionId = session.id; // Store Stripe session ID
+                payment.stripeSessionId = session.id;
                 payment.paymentDate = new Date();
                 payment.stripeSession = session;
                 yield payment.save({ session: mongooseSession });
-                // Update booking status to COMPLETED
                 booking.status = bookings_interface_1.BookingStatus.COMPLETED;
                 yield booking.save({ session: mongooseSession });
                 yield mongooseSession.commitTransaction();
@@ -61,7 +57,6 @@ const handleStripeWebhookEvent = (event) => __awaiter(void 0, void 0, void 0, fu
             }
             break;
         }
-        // Handle payment failures - but booking stays CONFIRMED for retry
         case "checkout.session.expired":
         case "checkout.session.async_payment_failed":
         case "payment_intent.payment_failed": {
@@ -69,12 +64,9 @@ const handleStripeWebhookEvent = (event) => __awaiter(void 0, void 0, void 0, fu
             const bookingId = (_c = session.metadata) === null || _c === void 0 ? void 0 : _c.bookingId;
             const paymentId = (_d = session.metadata) === null || _d === void 0 ? void 0 : _d.paymentId;
             if (bookingId && paymentId) {
-                // Only update payment status to UNPAID
                 yield payments_model_1.Payment.findByIdAndUpdate(paymentId, {
                     status: payments_interface_1.PaymentStatus.UNPAID,
                 });
-                // Booking stays CONFIRMED - tourist can try payment again
-                // DO NOT cancel booking automatically
                 console.log(`Payment failed for booking: ${bookingId}. Booking remains CONFIRMED for retry.`);
             }
             break;

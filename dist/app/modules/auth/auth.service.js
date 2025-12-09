@@ -24,14 +24,14 @@ const registerUser = (req) => __awaiter(void 0, void 0, void 0, function* () {
     const payload = req.body;
     if (req.file) {
         const uploadResult = yield fileUploader_1.fileUploader.uploadToCloudinary(req.file);
-        req.body.profilePicture = uploadResult === null || uploadResult === void 0 ? void 0 : uploadResult.secure_url;
+        if (uploadResult && "secure_url" in uploadResult) {
+            req.body.profilePicture = uploadResult.secure_url;
+        }
     }
-    // Check if user exists
     const existingUser = yield users_model_1.default.findOne({ email: payload.email });
     if (existingUser) {
         throw new AppError_1.default(409, "User already exists");
     }
-    // Role-specific validation in SERVICE (not Zod)
     if (payload.role === users_interface_1.Role.GUIDE) {
         if (!payload.expertise || payload.expertise.length === 0) {
             throw new AppError_1.default(400, "Expertise is required for guides");
@@ -43,7 +43,6 @@ const registerUser = (req) => __awaiter(void 0, void 0, void 0, function* () {
             throw new AppError_1.default(400, "City is required for guides");
         }
     }
-    // Remove guide fields for tourists
     if (payload.role === users_interface_1.Role.TOURIST) {
         delete payload.expertise;
         delete payload.dailyRate;
@@ -51,15 +50,12 @@ const registerUser = (req) => __awaiter(void 0, void 0, void 0, function* () {
     }
     payload.password = yield bcryptjs_1.default.hash(payload.password, 10);
     const user = yield users_model_1.default.create(payload);
-    // Generate tokens for immediate login
     const jwtPayload = {
         _id: user._id.toString(),
         email: user.email,
         role: user.role,
     };
-    // Access token
     const accessToken = jsonwebtoken_1.default.sign(jwtPayload, env_1.envVars.JWT_ACCESS_SECRET, { expiresIn: env_1.envVars.JWT_ACCESS_EXPIRES });
-    // Refresh token
     const refreshToken = jsonwebtoken_1.default.sign(jwtPayload, env_1.envVars.JWT_REFRESH_SECRET, { expiresIn: env_1.envVars.JWT_REFRESH_EXPIRES });
     return {
         user: {
@@ -79,25 +75,20 @@ const registerUser = (req) => __awaiter(void 0, void 0, void 0, function* () {
     };
 });
 const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    // 🔥 Must select password explicitly
     const isUserExist = yield users_model_1.default.findOne({ email: payload.email }).select("+password");
     if (!isUserExist) {
         throw new AppError_1.default(404, "User Not Found");
     }
-    // Compare passwords
     const checkPassword = yield bcryptjs_1.default.compare(payload.password, isUserExist.password);
     if (!checkPassword) {
         throw new AppError_1.default(403, "Password not matched");
     }
-    // JWT Payload
     const jwtPayload = {
         _id: isUserExist._id.toString(),
         email: isUserExist.email,
         role: isUserExist.role,
     };
-    // Access token
     const accessToken = jsonwebtoken_1.default.sign(jwtPayload, env_1.envVars.JWT_ACCESS_SECRET, { expiresIn: env_1.envVars.JWT_ACCESS_EXPIRES });
-    // Refresh token
     const refreshToken = jsonwebtoken_1.default.sign(jwtPayload, env_1.envVars.JWT_REFRESH_SECRET, { expiresIn: env_1.envVars.JWT_REFRESH_EXPIRES });
     return {
         accessToken,

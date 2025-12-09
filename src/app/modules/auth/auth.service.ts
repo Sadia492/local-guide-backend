@@ -11,7 +11,9 @@ const registerUser = async (req: Request) => {
   const payload = req.body as IUser;
   if (req.file) {
     const uploadResult = await fileUploader.uploadToCloudinary(req.file);
-    req.body.profilePicture = uploadResult?.secure_url;
+    if (uploadResult && "secure_url" in uploadResult) {
+      req.body.profilePicture = uploadResult.secure_url;
+    }
   }
 
   // Check if user exists

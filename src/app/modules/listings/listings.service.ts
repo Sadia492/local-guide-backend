@@ -1,6 +1,8 @@
 import { Request } from "express";
 import { IListing } from "./listings.interface";
 import Listing from "./listings.model";
+import { UploadApiResponse } from "cloudinary";
+
 import { fileUploader } from "../../../utils/fileUploader";
 
 // const createListing = async (req: Request) => {
@@ -23,20 +25,23 @@ const createListing = async (req: Request) => {
 
     try {
       const uploadResults = await Promise.all(uploadPromises);
+
+      // FIX: Use type assertion
       const imageUrls = uploadResults
-        .filter((result) => result?.secure_url)
-        .map((result) => result?.secure_url);
+        .filter((result) => result && (result as any).secure_url)
+        .map((result) => (result as any).secure_url);
 
       payload.images = imageUrls;
     } catch (error) {
       console.error("Error uploading images:", error);
-      // You might want to throw an error or handle this differently
     }
   } else if (req.file) {
-    // Handle single image for backward compatibility
+    // Handle single image
     const uploadResult = await fileUploader.uploadToCloudinary(req.file);
-    if (uploadResult?.secure_url) {
-      payload.images = [uploadResult.secure_url];
+
+    // FIX: Use type assertion
+    if (uploadResult && (uploadResult as any).secure_url) {
+      payload.images = [(uploadResult as any).secure_url];
     }
   }
 

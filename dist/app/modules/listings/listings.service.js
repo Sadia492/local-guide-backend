@@ -15,35 +15,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.listingService = void 0;
 const listings_model_1 = __importDefault(require("./listings.model"));
 const fileUploader_1 = require("../../../utils/fileUploader");
-// const createListing = async (req: Request) => {
-//   const payload = { ...req.body, guide: req.user._id };
-//   if (req.file) {
-//     const uploadResult = await fileUploader.uploadToCloudinary(req.file);
-//     req.body.image = uploadResult?.secure_url;
-//   }
-//   return await Listing.create(payload);
-// };
 const createListing = (req) => __awaiter(void 0, void 0, void 0, function* () {
     const payload = Object.assign(Object.assign({}, req.body), { guide: req.user._id });
-    // Handle multiple image uploads
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
         const uploadPromises = req.files.map((file) => fileUploader_1.fileUploader.uploadToCloudinary(file));
         try {
             const uploadResults = yield Promise.all(uploadPromises);
             const imageUrls = uploadResults
-                .filter((result) => result === null || result === void 0 ? void 0 : result.secure_url)
-                .map((result) => result === null || result === void 0 ? void 0 : result.secure_url);
+                .filter((result) => result && result.secure_url)
+                .map((result) => result.secure_url);
             payload.images = imageUrls;
         }
         catch (error) {
             console.error("Error uploading images:", error);
-            // You might want to throw an error or handle this differently
         }
     }
     else if (req.file) {
-        // Handle single image for backward compatibility
         const uploadResult = yield fileUploader_1.fileUploader.uploadToCloudinary(req.file);
-        if (uploadResult === null || uploadResult === void 0 ? void 0 : uploadResult.secure_url) {
+        if (uploadResult && uploadResult.secure_url) {
             payload.images = [uploadResult.secure_url];
         }
     }
@@ -57,7 +46,6 @@ const getAllListings = (query) => __awaiter(void 0, void 0, void 0, function* ()
         filters.category = query.category;
     if (query.language)
         filters.language = query.language;
-    // price range filtering
     if (query.minPrice || query.maxPrice) {
         filters.fee = {};
         if (query.minPrice)
@@ -94,6 +82,6 @@ exports.listingService = {
     getSingleListing,
     updateListing,
     deleteListing,
-    updateListingStatus, // Add this new function
+    updateListingStatus,
     getMyListings,
 };

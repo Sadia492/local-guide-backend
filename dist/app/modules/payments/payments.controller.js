@@ -14,9 +14,10 @@ const catchAsync_1 = require("../../../utils/catchAsync");
 const stripe_1 = require("../../../utils/stripe");
 const sendResponse_1 = require("../../../utils/sendResponse");
 const payments_service_1 = require("./payments.service");
+const env_1 = require("../../config/env");
 const handleStripeWebhookEvent = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const sig = req.headers["stripe-signature"];
-    const webhookSecret = "whsec_930c987f6394ea021c0c955d5afac3c7c2bcc600d43d92a4157301d628d9d680";
+    const webhookSecret = env_1.envVars.STRIPE_WEBHOOK_SECRET;
     let event;
     try {
         event = stripe_1.stripe.webhooks.constructEvent(req.body, sig, webhookSecret);

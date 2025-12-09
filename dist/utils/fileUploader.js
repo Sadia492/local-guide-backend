@@ -28,13 +28,11 @@ const storage = multer_1.default.diskStorage({
 });
 const upload = (0, multer_1.default)({ storage: storage });
 const uploadToCloudinary = (file) => __awaiter(void 0, void 0, void 0, function* () {
-    // Configuration
     cloudinary_1.v2.config({
         cloud_name: env_1.envVars.CLOUDINARY_CLOUD_NAME,
         api_key: env_1.envVars.CLOUDINARY_API_KEY,
         api_secret: env_1.envVars.CLOUDINARY_API_SECRET,
     });
-    // Upload an image
     const uploadResult = yield cloudinary_1.v2.uploader
         .upload(file.path, {
         public_id: file.filename,

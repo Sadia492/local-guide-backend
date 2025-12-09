@@ -4,39 +4,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const routes_1 = __importDefault(require("./routes")); // Your main router (import all modules there)
+const routes_1 = __importDefault(require("./routes"));
 const cors_1 = __importDefault(require("cors"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const notFoundRoute_1 = require("./middleware/notFoundRoute");
 const dotenv_1 = __importDefault(require("dotenv"));
 const globalErrorHandler_1 = require("./middleware/globalErrorHandler");
 const payments_controller_1 = require("./app/modules/payments/payments.controller");
-// Load env vars
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+app.use((0, cookie_parser_1.default)());
 app.post("/webhook", express_1.default.raw({ type: "application/json" }), payments_controller_1.PaymentController.handleStripeWebhookEvent);
+const corsOptions = {
+    origin: ["https://local-guide-frontend-rho.vercel.app", /\.vercel\.app$/],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+};
+app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 app.set("trust proxy", 1);
 app.use(express_1.default.urlencoded({ extended: true }));
-// app.use(
-//   cors({
-//     origin: [
-//       // process.env.FRONTEND_URL ||
-//       "http://localhost:3000",
-//       // "http://localhost:5174",
-//     ],
-//     credentials: true,
-//   })
-// );
-app.use((0, cors_1.default)({
-    origin: "http://localhost:3000", // Your frontend URL
-    credentials: true, // Allow credentials (cookies)
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-}));
-app.use((0, cookie_parser_1.default)());
 app.use("/api", routes_1.default);
-// Landing page with Local Guide Platform API info
 app.get("/", (req, res) => {
     res.send(`
     <!DOCTYPE html>

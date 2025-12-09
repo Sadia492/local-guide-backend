@@ -36,7 +36,6 @@ exports.getMyBookings = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(voi
     });
 }));
 exports.getAllBookings = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // const userId = req.user._id;
     const result = yield bookings_service_1.bookingService.getAllBookings();
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
@@ -45,32 +44,14 @@ exports.getAllBookings = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(vo
         data: result,
     });
 }));
-// export const updateBookingStatus = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const { id } = req.params;
-//     const result = await bookingService.updateBookingStatus(
-//       id,
-//       req.body.status
-//     );
-//     sendResponse(res, {
-//       success: true,
-//       statusCode: 200,
-//       message: "Booking status updated",
-//       data: result,
-//     });
-//   }
-// );
-// booking.controller.ts
 exports.updateBookingStatus = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { status } = req.body;
-    const user = req.user; // Assuming you have user in req
+    const user = req.user;
     let result;
-    // If guide is confirming booking, pass guideId
     if (status === bookings_interface_1.BookingStatus.CONFIRMED && user.role === users_interface_1.Role.GUIDE) {
         result = yield bookings_service_1.bookingService.updateBookingStatus(id, status, user._id);
     }
-    // For other status updates (cancellation, etc.)
     else {
         result = yield bookings_service_1.bookingService.updateBookingStatus(id, status);
     }
@@ -116,8 +97,6 @@ exports.getPendingBookings = (0, catchAsync_1.catchAsync)((req, res) => __awaite
         data: result,
     });
 }));
-// booking.controller.ts
-// booking.controller.ts - Add export for createPaymentSession
 exports.createPaymentSession = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const userId = req.user._id;
