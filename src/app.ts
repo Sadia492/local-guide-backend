@@ -20,7 +20,10 @@ app.post(
 
 app.use(
   cors({
-    origin: ["https://local-guide-frontend-rho.vercel.app"],
+    origin: [
+      "https://local-guide-frontend-rho.vercel.app",
+      "http://localhost:3000",
+    ],
     credentials: true,
   })
 );
