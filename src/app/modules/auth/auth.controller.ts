@@ -18,14 +18,14 @@ const registerUser = async (
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24, // 1 day
-      sameSite: "lax",
+      sameSite: "none",
     });
 
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      sameSite: "lax",
+      sameSite: "none",
     });
 
     sendResponse(res, {
@@ -47,31 +47,31 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   const isProduction = envVars.NODE_ENV === "production";
 
   // Set cookies with proper domain for cross-domain usage
-  //   res.cookie("accessToken", data.accessToken, {
-  //     httpOnly: true,
-  //     secure: envVars.NODE_ENV === "production",
-  //     sameSite: "none",
-  //   });
-
-  //   res.cookie("refreshToken", data.refreshToken, {
-  //     httpOnly: true,
-  //     secure: envVars.NODE_ENV === "production",
-  //     sameSite: "none",
-  //   });
-
   res.cookie("accessToken", data.accessToken, {
-    secure: envVars.NODE_ENV !== "development",
     httpOnly: true,
-    sameSite: "lax", // Change to 'lax' for local development
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    secure: envVars.NODE_ENV === "production",
+    sameSite: "none",
   });
 
   res.cookie("refreshToken", data.refreshToken, {
-    secure: envVars.NODE_ENV !== "development",
     httpOnly: true,
-    sameSite: "lax", // Change to 'lax' for local development
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    secure: envVars.NODE_ENV === "production",
+    sameSite: "none",
   });
+
+  // res.cookie("accessToken", data.accessToken, {
+  //   secure: envVars.NODE_ENV !== "development",
+  //   httpOnly: true,
+  //   sameSite: "lax", // Change to 'lax' for local development
+  //   maxAge: 7 * 24 * 60 * 60 * 1000,
+  // });
+
+  // res.cookie("refreshToken", data.refreshToken, {
+  //   secure: envVars.NODE_ENV !== "development",
+  //   httpOnly: true,
+  //   sameSite: "lax", // Change to 'lax' for local development
+  //   maxAge: 7 * 24 * 60 * 60 * 1000,
+  // });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -85,13 +85,13 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
     secure: envVars.NODE_ENV === "production",
-    sameSite: "lax", // Change to 'lax' for local development
+    sameSite: "none", // Change to 'lax' for local development
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: envVars.NODE_ENV === "production",
-    sameSite: "lax", // Change to 'lax' for local development
+    sameSite: "none", // Change to 'lax' for local development
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   sendResponse(res, {
