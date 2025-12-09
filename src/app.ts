@@ -27,7 +27,11 @@ app.use(
     credentials: true,
   })
 );
-
+app.options("*", cors());
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
 app.use(express.json());
 app.set("trust proxy", 1);
 app.use(express.urlencoded({ extended: true }));
