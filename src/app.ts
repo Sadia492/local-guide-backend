@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 // );
 app.use(
   cors({
-    origin: "http://localhost:3000", // Your frontend URL
+    origin: [process.env.FRONTEND_URL || "http://localhost:3000"],
     credentials: true, // Allow credentials (cookies)
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
