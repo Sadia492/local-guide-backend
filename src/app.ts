@@ -19,6 +19,12 @@ app.post(
 app.use(express.json());
 app.set("trust proxy", 1);
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: true, // Allow ALL origins
+    credentials: true,
+  })
+);
 // app.use(
 //   cors({
 //     origin: [
@@ -31,18 +37,18 @@ app.use(express.urlencoded({ extended: true }));
 // );
 // Replace your current CORS config with this:
 // SIMPLE CORS that definitely works
-const corsOptions = {
-  origin: [
-    "https://local-guide-frontend-rho.vercel.app",
-    /\.vercel\.app$/, // Allow ALL Vercel domains
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-};
+// const corsOptions = {
+//   origin: [
+//     "https://local-guide-frontend-rho.vercel.app",
+//     /\.vercel\.app$/, // Allow ALL Vercel domains
+//   ],
+//   credentials: true,
+//   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+// };
 
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Use SAME config for preflight
+// app.use(cors(corsOptions));
+// app.options("*", cors(corsOptions)); // Use SAME config for preflight
 
 app.use(cookieParser());
 
