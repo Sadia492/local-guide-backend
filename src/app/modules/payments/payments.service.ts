@@ -15,7 +15,6 @@ const handleStripeWebhookEvent = async (event: any) => {
       const paymentId = session.metadata?.paymentId;
 
       if (!bookingId || !paymentId) {
-        console.error("No bookingId or paymentId found in session metadata");
         break;
       }
 
@@ -51,10 +50,6 @@ const handleStripeWebhookEvent = async (event: any) => {
         await booking.save({ session: mongooseSession });
 
         await mongooseSession.commitTransaction();
-
-        console.log(
-          `Payment completed. Booking ${bookingId} is now COMPLETED.`
-        );
       } catch (error) {
         await mongooseSession.abortTransaction();
         console.error("Error processing payment webhook:", error);

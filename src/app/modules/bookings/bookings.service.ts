@@ -271,12 +271,10 @@ const createPaymentSession = async (bookingId: string, userId: string) => {
           };
         } else if (existingSession.status === "expired") {
           // Session expired, we'll create a new one
-          console.log("Existing session expired, creating new one");
         }
         // If status is "complete" (paid), we shouldn't get here because of earlier check
       } catch (error) {
         // Session might be invalid or not found, create new one
-        console.log("Existing session invalid, creating new one");
       }
     }
 
@@ -355,18 +353,12 @@ const getUpcomingBookings = async (userId: string) => {
   const listingIds = guideListings.map((l) => l._id.toString()); // Convert to string!
 
   if (listingIds.length === 0) {
-    console.log("No listings found for this guide");
     return [];
   }
   // First, let's check what bookings exist for these listings
   const allBookingsForListings = await Booking.find({
     listing: { $in: listingIds },
   }).lean();
-
-  console.log(
-    "ALL bookings for these listings (regardless of date/status):",
-    allBookingsForListings.length
-  );
 
   const result = await Booking.find({
     listing: { $in: listingIds },

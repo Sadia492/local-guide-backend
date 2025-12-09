@@ -58,7 +58,7 @@ const getSingleListing = catchAsync(async (req: Request, res: Response) => {
 });
 const getMyListings = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user._id;
-  console.log(userId);
+
   const result = await listingService.getMyListings(userId);
   sendResponse(res, {
     success: true,
