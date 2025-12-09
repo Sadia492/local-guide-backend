@@ -29,14 +29,51 @@ app.use(express.urlencoded({ extended: true }));
 //     credentials: true,
 //   })
 // );
+// Replace your current CORS config with this:
 app.use(
   cors({
-    origin: "https://local-guide-frontend-rho.vercel.app", // Your frontend URL
-    credentials: true, // Allow credentials (cookies)
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // List of allowed origins
+      const allowedOrigins = [
+        "http://localhost:3000",
+        // Production URL
+        "https://local-guide-frontend-rho.vercel.app",
+        // Vercel preview URLs pattern
+        /^https:\/\/local-guide-frontend-.*\.vercel\.app$/,
+        /^https:\/\/local-guide-frontend-git-.*\.vercel\.app$/,
+        // If you have a custom domain, add it
+        // 'https://yourdomain.com',
+      ];
+
+      // Check if origin matches any allowed pattern
+      if (
+        allowedOrigins.some((pattern) => {
+          if (typeof pattern === "string") {
+            return origin === pattern;
+          } else if (pattern instanceof RegExp) {
+            return pattern.test(origin);
+          }
+          return false;
+        })
+      ) {
+        callback(null, true);
+      } else {
+        console.log("Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"],
   })
 );
+
+// Handle preflight requests
+app.options("*", cors()); // Enable pre-flight for all routes
 
 app.use(cookieParser());
 
