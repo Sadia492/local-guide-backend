@@ -6,41 +6,34 @@ import { notFoundRoute } from "./middleware/notFoundRoute";
 import dotenv from "dotenv";
 import { globalErrorHandler } from "./middleware/globalErrorHandler";
 import { PaymentController } from "./app/modules/payments/payments.controller";
+import { envVars } from "./app/config/env";
 
 // Load env vars
 dotenv.config();
 
 const app = express();
+
+app.use(express.json());
+app.set("trust proxy", 1);
+app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: [envVars.FRONTEND_URL, "http://localhost:3000"],
+    credentials: true,
+  })
+);
+
+// Handle preflight requests
+// app.options("*", cors());s
+
+app.use(cookieParser());
+
+app.use("/api", routes);
 app.post(
   "/webhook",
   express.raw({ type: "application/json" }),
   PaymentController.handleStripeWebhookEvent
 );
-app.use(express.json());
-app.set("trust proxy", 1);
-app.use(express.urlencoded({ extended: true }));
-// app.use(
-//   cors({
-//     origin: [
-//       // process.env.FRONTEND_URL ||
-//       "http://localhost:3000",
-//       // "http://localhost:5174",
-//     ],
-//     credentials: true,
-//   })
-// );
-app.use(
-  cors({
-    origin: [process.env.FRONTEND_URL || "http://localhost:3000"],
-    credentials: true, // Allow credentials (cookies)
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-  })
-);
-
-app.use(cookieParser());
-
-app.use("/api", routes);
 
 // Landing page with Local Guide Platform API info
 app.get("/", (req: Request, res: Response) => {
