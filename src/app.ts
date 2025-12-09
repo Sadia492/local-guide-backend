@@ -6,6 +6,7 @@ import { notFoundRoute } from "./middleware/notFoundRoute";
 import dotenv from "dotenv";
 import { globalErrorHandler } from "./middleware/globalErrorHandler";
 import { PaymentController } from "./app/modules/payments/payments.controller";
+import { envVars } from "./app/config/env";
 
 // Load env vars
 dotenv.config();
@@ -20,7 +21,12 @@ app.post(
 
 // CORS configuration
 const corsOptions = {
-  origin: ["https://local-guide-frontend-rho.vercel.app", /\.vercel\.app$/],
+  origin: [
+    envVars.FRONTEND_URL,
+    "https://local-guide-frontend-rho.vercel.app",
+    "http://localhost:3000",
+    /\.vercel\.app$/,
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
