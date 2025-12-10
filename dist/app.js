@@ -11,12 +11,18 @@ const notFoundRoute_1 = require("./middleware/notFoundRoute");
 const dotenv_1 = __importDefault(require("dotenv"));
 const globalErrorHandler_1 = require("./middleware/globalErrorHandler");
 const payments_controller_1 = require("./app/modules/payments/payments.controller");
+const env_1 = require("./app/config/env");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cookie_parser_1.default)());
 app.post("/webhook", express_1.default.raw({ type: "application/json" }), payments_controller_1.PaymentController.handleStripeWebhookEvent);
 const corsOptions = {
-    origin: ["https://local-guide-frontend-rho.vercel.app", /\.vercel\.app$/],
+    origin: [
+        env_1.envVars.FRONTEND_URL,
+        "https://local-guide-frontend-rho.vercel.app",
+        "http://localhost:3000",
+        /\.vercel\.app$/,
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
