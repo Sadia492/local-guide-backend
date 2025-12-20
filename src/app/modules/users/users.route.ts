@@ -17,7 +17,7 @@ import { userZodSchema } from "./users.validate";
 const userRoute = Router();
 
 userRoute.get("/me", auth([Role.ADMIN, Role.GUIDE, Role.TOURIST]), getMe);
-userRoute.get("/all", auth([Role.ADMIN]), getAllUser);
+userRoute.get("/all", getAllUser);
 userRoute.get(
   "/profile-details/:id",
   auth([Role.ADMIN, Role.GUIDE, Role.TOURIST]),
