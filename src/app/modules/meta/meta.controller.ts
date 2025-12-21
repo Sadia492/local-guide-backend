@@ -38,7 +38,16 @@ const getAdminDashboardStats = catchAsync(
     });
   }
 );
+const getHeroStats = catchAsync(async (req: Request, res: Response) => {
+  const heroStats = await MetaService.getHeroStats();
 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Hero statistics retrieved successfully",
+    data: heroStats,
+  });
+});
 const getChartData = catchAsync(async (req: Request, res: Response) => {
   const { timeframe = "monthly" } = req.query;
 
@@ -62,4 +71,5 @@ export const MetaController = {
   getDashboardStats,
   getAdminDashboardStats,
   getChartData,
+  getHeroStats,
 };

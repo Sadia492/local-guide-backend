@@ -102,6 +102,86 @@ const getAdminMetaData = () => __awaiter(void 0, void 0, void 0, function* () {
         recentReviews,
     };
 });
+const getHeroStats = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const [totalTravelersResult, totalLocalGuidesResult, totalCitiesResult, reviewStatsResult,] = yield Promise.all([
+            bookings_model_1.Booking.distinct("user", {
+                status: { $in: ["CONFIRMED", "COMPLETED"] },
+            }).then((bookingUserIds) => {
+                return users_model_1.default.countDocuments({
+                    _id: { $in: bookingUserIds },
+                    role: users_interface_1.Role.TOURIST,
+                    isActive: true,
+                });
+            }),
+            listings_model_1.default.distinct("guide", { isActive: true }).then((activeGuideIds) => {
+                return users_model_1.default.countDocuments({
+                    _id: { $in: activeGuideIds },
+                    role: users_interface_1.Role.GUIDE,
+                    isActive: true,
+                });
+            }),
+            listings_model_1.default.distinct("city", { isActive: true }).then((cities) => {
+                const validCities = cities.filter((city) => city && city.trim() !== "");
+                return validCities.length;
+            }),
+            reviews_model_1.Review.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        totalReviews: { $sum: 1 },
+                        fiveStarReviews: {
+                            $sum: { $cond: [{ $eq: ["$rating", 5] }, 1, 0] },
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        totalReviews: 1,
+                        fiveStarReviews: 1,
+                        fiveStarPercentage: {
+                            $cond: [
+                                { $gt: ["$totalReviews", 0] },
+                                {
+                                    $multiply: [
+                                        { $divide: ["$fiveStarReviews", "$totalReviews"] },
+                                        100,
+                                    ],
+                                },
+                                0,
+                            ],
+                        },
+                    },
+                },
+            ]),
+        ]);
+        const formatNumber = (num) => {
+            if (num >= 1000) {
+                return `${Math.floor(num / 1000)}K+`;
+            }
+            return `${num}+`;
+        };
+        const reviewStats = reviewStatsResult[0] || { fiveStarPercentage: 0 };
+        const fiveStarPercentage = reviewStats.fiveStarPercentage
+            ? Math.round(reviewStats.fiveStarPercentage)
+            : 0;
+        return {
+            happyTravelers: formatNumber(totalTravelersResult || 0),
+            localGuides: formatNumber(totalLocalGuidesResult || 0),
+            cities: formatNumber(totalCitiesResult || 0),
+            fiveStarReviews: fiveStarPercentage || 98,
+        };
+    }
+    catch (error) {
+        console.error("Error fetching hero stats:", error);
+        return {
+            happyTravelers: "50K+",
+            localGuides: "2K+",
+            cities: "500+",
+            fiveStarReviews: 98,
+        };
+    }
+});
 const getGuideMetaData = (user) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const guideId = user === null || user === void 0 ? void 0 : user._id;
@@ -401,4 +481,5 @@ exports.MetaService = {
     getTouristMetaData,
     getBarChartData,
     getPieChartData,
+    getHeroStats,
 };

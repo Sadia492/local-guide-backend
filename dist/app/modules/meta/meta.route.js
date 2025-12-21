@@ -11,4 +11,5 @@ const metaRoute = express_1.default.Router();
 metaRoute.get("/dashboard", (0, auth_1.auth)([users_interface_1.Role.ADMIN, users_interface_1.Role.GUIDE, users_interface_1.Role.TOURIST]), meta_controller_1.MetaController.getDashboardStats);
 metaRoute.get("/dashboard/admin", (0, auth_1.auth)([users_interface_1.Role.ADMIN]), meta_controller_1.MetaController.getAdminDashboardStats);
 metaRoute.get("/charts", (0, auth_1.auth)([users_interface_1.Role.ADMIN]), meta_controller_1.MetaController.getChartData);
+metaRoute.get("/hero-stats", meta_controller_1.MetaController.getHeroStats);
 exports.default = metaRoute;

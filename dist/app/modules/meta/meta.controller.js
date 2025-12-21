@@ -44,6 +44,15 @@ const getAdminDashboardStats = (0, catchAsync_1.catchAsync)((req, res) => __awai
         data: metaData,
     });
 }));
+const getHeroStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const heroStats = yield meta_service_1.MetaService.getHeroStats();
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: "Hero statistics retrieved successfully",
+        data: heroStats,
+    });
+}));
 const getChartData = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { timeframe = "monthly" } = req.query;
     const [barChartData, pieChartData] = yield Promise.all([
@@ -64,4 +73,5 @@ exports.MetaController = {
     getDashboardStats,
     getAdminDashboardStats,
     getChartData,
+    getHeroStats,
 };

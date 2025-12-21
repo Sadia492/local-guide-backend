@@ -23,5 +23,5 @@ metaRoute.get(
 
 // Chart data for visualizations
 metaRoute.get("/charts", auth([Role.ADMIN]), MetaController.getChartData);
-
+metaRoute.get("/hero-stats", MetaController.getHeroStats);
 export default metaRoute;
